@@ -1,0 +1,32 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <title>Voting App</title>
+  <style>
+    body { font-family: sans-serif; max-width: 480px; margin: 60px auto; padding: 0 20px; }
+    h1 { font-size: 1.4rem; }
+    form { display: flex; flex-direction: column; gap: 10px; }
+    input, button { padding: 8px; font-size: 1rem; }
+    button { cursor: pointer; }
+    .flash { background: #fef3c7; padding: 8px 12px; border-radius: 4px; margin-bottom: 10px; }
+    .option { border: 1px solid #ddd; border-radius: 6px; padding: 10px; margin-bottom: 8px; display: flex; justify-content: space-between; align-items: center; }
+    nav a { margin-right: 12px; }
+  </style>
+</head>
+<body>
+  <nav>
+    <a href="{{ url_for('vote') }}">Vote</a>
+    <a href="{{ url_for('results') }}">Results</a>
+    <a href="{{ url_for('logout') }}">Logout</a>
+  </nav>
+  {% with messages = get_flashed_messages() %}
+    {% if messages %}
+      {% for m in messages %}
+        <div class="flash">{{ m }}</div>
+      {% endfor %}
+    {% endif %}
+  {% endwith %}
+  {% block content %}{% endblock %}
+</body>
+</html>

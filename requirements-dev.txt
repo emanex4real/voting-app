@@ -1,0 +1,5 @@
+# Only needed for running tests locally / in CI — not part of the
+# production image (not copied into the Dockerfile).
+-r requirements.txt
+pytest==8.3.3
+fakeredis==2.26.1

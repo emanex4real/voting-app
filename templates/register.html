@@ -1,0 +1,28 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <title>Register</title>
+  <style>
+    body { font-family: sans-serif; max-width: 360px; margin: 100px auto; padding: 0 20px; }
+    form { display: flex; flex-direction: column; gap: 10px; }
+    input, button { padding: 8px; font-size: 1rem; }
+    button { cursor: pointer; }
+    .flash { background: #fef3c7; padding: 8px 12px; border-radius: 4px; margin-bottom: 10px; }
+  </style>
+</head>
+<body>
+  <h1>Create Account</h1>
+  {% with messages = get_flashed_messages() %}
+    {% if messages %}
+      {% for m in messages %}<div class="flash">{{ m }}</div>{% endfor %}
+    {% endif %}
+  {% endwith %}
+  <form method="post">
+    <input type="text" name="username" placeholder="Username" required autofocus>
+    <input type="password" name="password" placeholder="Password" required>
+    <button type="submit">Register</button>
+  </form>
+  <p>Already have an account? <a href="{{ url_for('login') }}">Log in</a></p>
+</body>
+</html>

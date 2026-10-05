@@ -1,0 +1,16 @@
+{
+  "name": "voting-app-worker",
+  "version": "1.0.0",
+  "description": "Consumes vote jobs from Redis and writes them to Postgres",
+  "main": "worker.js",
+  "type": "commonjs",
+  "scripts": {
+    "start": "node worker.js",
+    "test": "node --test"
+  },
+  "dependencies": {
+    "dotenv": "^16.4.5",
+    "pg": "^8.11.5",
+    "redis": "^4.6.13"
+  }
+}

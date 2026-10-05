@@ -1,0 +1,67 @@
+# Phase 3: the full stack, all containerized.
+# This replaces docker-compose.dev.yml and running Flask/worker manually.
+#
+# Usage:
+#   docker compose up --build -d     (first run, or after code changes)
+#   docker compose up -d             (subsequent runs)
+#   docker compose logs -f           (watch logs from all services)
+#   docker compose down              (stop everything)
+
+services:
+  redis:
+    image: redis:7-alpine
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 3s
+      retries: 5
+
+  postgres:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_USER: voting
+      POSTGRES_PASSWORD: voting
+      POSTGRES_DB: voting
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U voting"]
+      interval: 5s
+      timeout: 3s
+      retries: 5
+
+  web:
+    build: .
+    ports:
+      - "5000:5000"
+    environment:
+      SECRET_KEY: dev-secret-change-me
+      DATABASE_URL: postgresql+psycopg://voting:voting@postgres:5432/voting
+      REDIS_URL: redis://redis:6379/0
+    depends_on:
+      redis:
+        condition: service_healthy
+      postgres:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:5000/health')"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 10s
+
+  worker:
+    build: ./worker
+    environment:
+      DATABASE_URL: postgresql://voting:voting@postgres:5432/voting
+      REDIS_URL: redis://redis:6379/0
+    depends_on:
+      redis:
+        condition: service_healthy
+      postgres:
+        condition: service_healthy
+      web:
+        condition: service_healthy
+
+volumes:
+  pgdata:
