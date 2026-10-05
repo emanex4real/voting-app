@@ -25,7 +25,7 @@ jobs:
         run: pip install -r requirements-dev.txt
 
       - name: Run tests
-        run: pytest -v
+        run: python -m pytest -v
 
   # ---------------------------------------------------------------------
   # Run the worker's test suite
