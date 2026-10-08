@@ -1,7 +1,8 @@
 # Voting App
 
-A containerized, multi-service voting application with a full CI/CD pipeline,
-deployed on AWS EC2.
+A containerized, multi-service voting application ("Lemon Vote") with a full
+CI/CD pipeline: every push to `main` is tested, built into Docker images, and
+automatically deployed to AWS EC2.
 
 **Live demo:** `http://<your-ec2-ip>:5000`
 
@@ -46,7 +47,7 @@ voting-app/
 ├── docker-compose.dev.yml      Redis + Postgres only (for running Flask/worker outside Docker)
 ├── docker-compose.prod.yml     Full stack, pulling prebuilt images from GHCR (EC2 deployment)
 ├── .env.example                Template for required environment variables
-└── .github/workflows/ci.yml    CI/CD pipeline
+└── .github/workflows/ci.yml    CI/CD pipeline (test, build, push, deploy)
 ```
 
 ---
@@ -144,18 +145,40 @@ makes them suitable for CI.
 
 ## CI/CD pipeline
 
-Defined in `.github/workflows/ci.yml`, runs on every push/PR:
+Defined in `.github/workflows/ci.yml`. Tests run on every push and PR; the
+build and deploy jobs run only on pushes to `main`.
 
-1. **`test-web`** — installs `requirements-dev.txt`, runs `pytest`
-2. **`test-worker`** — installs worker deps, runs `npm test`
-3. **`build-and-push`** — only runs after both test jobs pass, and only on
-   pushes to `main`. Builds the `web` and `worker` Docker images and pushes
-   them to GitHub Container Registry:
+1. **`test-web`**: installs `requirements-dev.txt`, runs `python -m pytest`
+2. **`test-worker`**: installs worker deps, runs `npm test`
+3. **`build-and-push`**: runs only after both test jobs pass. Builds the
+   `web` and `worker` Docker images and pushes them to GitHub Container
+   Registry:
    - `ghcr.io/emanex4real/voting-app-web:latest`
    - `ghcr.io/emanex4real/voting-app-worker:latest`
 
-No extra secrets are needed for the registry push — it uses GitHub's
-built-in `GITHUB_TOKEN`.
+   (Each image is also tagged with the commit SHA, so any build can be
+   redeployed by hand for a rollback.)
+4. **`deploy`**: runs only after `build-and-push` succeeds. See
+   "Automated deployment" below.
+
+If any test fails, nothing is built or deployed.
+
+The registry push needs no extra secrets (it uses GitHub's built-in
+`GITHUB_TOKEN`). The `deploy` job needs the secrets listed below.
+
+### Required GitHub Actions secrets (for the `deploy` job)
+
+Set under repo **Settings > Secrets and variables > Actions**:
+
+| Secret                  | Value                                                        |
+|-------------------------|--------------------------------------------------------------|
+| `EC2_HOST`              | The EC2 instance's public IP address                         |
+| `EC2_USER`              | `ubuntu`                                                     |
+| `EC2_SSH_KEY`           | Full contents of the `.pem` private key, including header/footer lines |
+| `AWS_ACCESS_KEY_ID`     | Access key of the limited IAM deploy user (see below)        |
+| `AWS_SECRET_ACCESS_KEY` | Secret key for that same IAM user                            |
+| `AWS_REGION`            | The instance's region, e.g. `eu-north-1` (not the availability zone like `eu-north-1b`) |
+| `EC2_SG_ID`             | ID of the instance's security group (`sg-...`)               |
 
 ---
 
@@ -188,6 +211,34 @@ commands used):
 prebuilt `image:` references from GHCR instead of `build:`-ing locally (much
 faster on a small instance), and all services have `restart: unless-stopped`
 so they survive a server reboot.
+
+### Automated deployment
+
+After the first manual setup above, deploys are automatic. On every push to
+`main` that passes tests, the `deploy` job:
+
+1. Logs into AWS as a limited IAM user
+2. Looks up the GitHub runner's public IP
+3. Opens port 22 in the security group for **that IP only** (`/32`)
+4. SSHs into the server and runs `docker compose pull` and `up -d`
+5. Closes the port 22 rule again (this step runs even if the deploy fails)
+
+This is needed because SSH on the server is restricted to the owner's own IP.
+GitHub's runners connect from different addresses, so without the temporary
+rule the deploy times out. The rest of the time SSH stays locked down.
+
+**IAM setup (one time):**
+- Create a policy allowing only `ec2:AuthorizeSecurityGroupIngress` and
+  `ec2:RevokeSecurityGroupIngress`, with `Resource` set to the ARN of the
+  one security group (`arn:aws:ec2:<region>:<account-id>:security-group/<sg-id>`).
+- Create an IAM user with no console access, attach that policy, and create
+  an access key for it. Store the key as the `AWS_*` secrets above.
+
+The deploy user can change firewall rules on that single group and nothing
+else in the AWS account.
+
+**Manual deploy (fallback):** SSH in and run the `pull` and `up -d` commands
+from step 6 above.
 
 ### Rotating the Postgres password safely
 
@@ -258,6 +309,19 @@ terminal, or fully log out and back in for it to apply everywhere.
 create or update workflow `.github/workflows/...` without `workflow` scope"**
 Your PAT needs the `workflow` scope in addition to `repo` to push changes
 to CI config files specifically. Edit the token on GitHub to add it.
+
+**`deploy` job fails with `dial tcp ...:22: i/o timeout`**
+GitHub's runner can't reach port 22 because the security group only allows
+the owner's IP. Check that the "Open SSH for this runner" step ran and
+succeeded, that the `AWS_*` and `EC2_SG_ID` secrets are set, and that the IAM
+policy's `Resource` ARN matches the security group exactly. Also confirm
+`AWS_REGION` is the region (`eu-north-1`), not the availability zone
+(`eu-north-1b`).
+
+**Can't SSH into the server from your own machine (connection timed out)**
+Your public IP has probably changed (home and mobile connections rotate
+addresses). In the security group, edit the SSH (port 22) rule and set the
+source to **My IP** again.
 
 **GitHub Actions job fails with "The job was not acquired by Runner...
 Internal server error"**
