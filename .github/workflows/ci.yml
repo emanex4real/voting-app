@@ -99,14 +99,32 @@ jobs:
           cache-to: type=gha,mode=max
 
   # ---------------------------------------------------------------------
-  # Deploy: SSH into the EC2 server and pull/restart with the new images.
-  # This is the actual "CD" part — everything before this point only
-  # builds and stores images, it doesn't touch the live server.
+  # Deploy: temporarily open SSH for this runner's IP, redeploy over SSH,
+  # then close the firewall rule again (even if the deploy fails).
+  # SSH stays locked down to your own IP the rest of the time.
   # ---------------------------------------------------------------------
   deploy:
     needs: build-and-push
     runs-on: ubuntu-latest
     steps:
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: ${{ secrets.AWS_REGION }}
+
+      - name: Get runner public IP
+        id: ip
+        run: echo "addr=$(curl -s https://checkip.amazonaws.com)" >> "$GITHUB_OUTPUT"
+
+      - name: Open SSH for this runner
+        run: |
+          aws ec2 authorize-security-group-ingress \
+            --group-id ${{ secrets.EC2_SG_ID }} \
+            --protocol tcp --port 22 \
+            --cidr ${{ steps.ip.outputs.addr }}/32
+
       - name: SSH into EC2 and redeploy
         uses: appleboy/ssh-action@v1.0.3
         with:
@@ -118,3 +136,11 @@ jobs:
             docker compose -f docker-compose.prod.yml pull
             docker compose -f docker-compose.prod.yml up -d
             docker image prune -f
+
+      - name: Close SSH for this runner
+        if: always()
+        run: |
+          aws ec2 revoke-security-group-ingress \
+            --group-id ${{ secrets.EC2_SG_ID }} \
+            --protocol tcp --port 22 \
+            --cidr ${{ steps.ip.outputs.addr }}/32
