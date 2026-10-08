@@ -137,7 +137,7 @@
 <body>
   <div class="wrap">
     <header class="top">
-      <a href="{{ url_for('vote') }}" class="brand">
+      <a href="#" class="brand">
         <svg width="34" height="34" viewBox="0 0 36 36" aria-hidden="true">
           <circle cx="18" cy="18" r="16.5" fill="#A4C639" stroke="#87A62E" stroke-width="2.5"/>
           <circle cx="18" cy="18" r="5" fill="#FFFBEF"/>
@@ -153,21 +153,43 @@
         <span class="brand-name">Lemon Vote</span>
       </a>
       <nav class="top-nav">
-        <a href="{{ url_for('vote') }}">Vote</a>
-        <a href="{{ url_for('results') }}">Results</a>
-        <a href="{{ url_for('logout') }}">Log out</a>
+        <a href="#">Vote</a>
+        <a href="#">Results</a>
+        <a href="#">Log out</a>
       </nav>
     </header>
 
-    {% with messages = get_flashed_messages() %}
-      {% if messages %}
-        {% for m in messages %}
-          <div class="flash">{{ m }}</div>
-        {% endfor %}
-      {% endif %}
-    {% endwith %}
+    
+      
+    
 
-    {% block content %}{% endblock %}
+    
+  <h1 class="page-title">Cast your vote</h1>
+
+  <div class="card">
+    
+      <form method="post">
+        
+          <label class="option-row">
+            <input type="radio" name="option_id" value="1" required>
+            <span class="bubble">Amina Yusuf</span>
+          </label>
+        
+          <label class="option-row">
+            <input type="radio" name="option_id" value="2" required>
+            <span class="bubble">Chidi Okafor</span>
+          </label>
+        
+          <label class="option-row">
+            <input type="radio" name="option_id" value="3" required>
+            <span class="bubble">Grace Adeyemi</span>
+          </label>
+        
+        <button type="submit" class="cast">Cast my vote</button>
+      </form>
+    
+  </div>
+
 
     <footer class="bottom">Fresh picked results, updated as votes come in.</footer>
   </div>

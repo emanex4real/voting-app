@@ -97,3 +97,24 @@ jobs:
             ghcr.io/${{ github.repository }}-worker:${{ github.sha }}
           cache-from: type=gha
           cache-to: type=gha,mode=max
+
+  # ---------------------------------------------------------------------
+  # Deploy: SSH into the EC2 server and pull/restart with the new images.
+  # This is the actual "CD" part — everything before this point only
+  # builds and stores images, it doesn't touch the live server.
+  # ---------------------------------------------------------------------
+  deploy:
+    needs: build-and-push
+    runs-on: ubuntu-latest
+    steps:
+      - name: SSH into EC2 and redeploy
+        uses: appleboy/ssh-action@v1.0.3
+        with:
+          host: ${{ secrets.EC2_HOST }}
+          username: ${{ secrets.EC2_USER }}
+          key: ${{ secrets.EC2_SSH_KEY }}
+          script: |
+            cd ~/voting-app
+            docker compose -f docker-compose.prod.yml pull
+            docker compose -f docker-compose.prod.yml up -d
+            docker image prune -f

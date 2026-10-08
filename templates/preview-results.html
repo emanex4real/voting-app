@@ -137,7 +137,7 @@
 <body>
   <div class="wrap">
     <header class="top">
-      <a href="{{ url_for('vote') }}" class="brand">
+      <a href="#" class="brand">
         <svg width="34" height="34" viewBox="0 0 36 36" aria-hidden="true">
           <circle cx="18" cy="18" r="16.5" fill="#A4C639" stroke="#87A62E" stroke-width="2.5"/>
           <circle cx="18" cy="18" r="5" fill="#FFFBEF"/>
@@ -153,21 +153,60 @@
         <span class="brand-name">Lemon Vote</span>
       </a>
       <nav class="top-nav">
-        <a href="{{ url_for('vote') }}">Vote</a>
-        <a href="{{ url_for('results') }}">Results</a>
-        <a href="{{ url_for('logout') }}">Log out</a>
+        <a href="#">Vote</a>
+        <a href="#">Results</a>
+        <a href="#">Log out</a>
       </nav>
     </header>
 
-    {% with messages = get_flashed_messages() %}
-      {% if messages %}
-        {% for m in messages %}
-          <div class="flash">{{ m }}</div>
-        {% endfor %}
-      {% endif %}
-    {% endwith %}
+    
+      
+    
 
-    {% block content %}{% endblock %}
+    
+  <h1 class="page-title">Live results</h1>
+
+  <div class="card">
+    <p style="margin: 0 0 22px; color: var(--ink-soft); font-size: 14.5px;">
+      142 votes counted so far
+    </p>
+
+    
+      
+      <div style="margin-bottom: 20px;">
+        <div style="display:flex; justify-content:space-between; margin-bottom: 7px; font-size: 15px; font-weight: 500;">
+          <span>Amina Yusuf</span>
+          <span style="color: var(--ink-soft); font-weight: 400;">68 &middot; 48%</span>
+        </div>
+        <div style="background: var(--leaf-dim); height: 12px; border-radius: 8px; overflow: hidden;">
+          <div style="background: var(--lemon); height: 100%; width: 47.88732394366197%; border-radius: 8px;"></div>
+        </div>
+      </div>
+    
+      
+      <div style="margin-bottom: 20px;">
+        <div style="display:flex; justify-content:space-between; margin-bottom: 7px; font-size: 15px; font-weight: 500;">
+          <span>Chidi Okafor</span>
+          <span style="color: var(--ink-soft); font-weight: 400;">51 &middot; 36%</span>
+        </div>
+        <div style="background: var(--leaf-dim); height: 12px; border-radius: 8px; overflow: hidden;">
+          <div style="background: var(--lemon); height: 100%; width: 35.91549295774648%; border-radius: 8px;"></div>
+        </div>
+      </div>
+    
+      
+      <div style="margin-bottom: 20px;">
+        <div style="display:flex; justify-content:space-between; margin-bottom: 7px; font-size: 15px; font-weight: 500;">
+          <span>Grace Adeyemi</span>
+          <span style="color: var(--ink-soft); font-weight: 400;">23 &middot; 16%</span>
+        </div>
+        <div style="background: var(--leaf-dim); height: 12px; border-radius: 8px; overflow: hidden;">
+          <div style="background: var(--lemon); height: 100%; width: 16.19718309859155%; border-radius: 8px;"></div>
+        </div>
+      </div>
+    
+  </div>
+
 
     <footer class="bottom">Fresh picked results, updated as votes come in.</footer>
   </div>

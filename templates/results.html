@@ -1,11 +1,23 @@
 {% extends "base.html" %}
 {% block content %}
-  <h1>Live Results</h1>
-  <p>Total votes cast: {{ total_votes }}</p>
-  {% for row in data %}
-    <div class="option">
-      <span>{{ row.name }}</span>
-      <strong>{{ row.count }}</strong>
-    </div>
-  {% endfor %}
+  <h1 class="page-title">Live results</h1>
+
+  <div class="card">
+    <p style="margin: 0 0 22px; color: var(--ink-soft); font-size: 14.5px;">
+      {{ total_votes }} vote{{ 's' if total_votes != 1 else '' }} counted so far
+    </p>
+
+    {% for row in data %}
+      {% set pct = (row.count / total_votes * 100) if total_votes else 0 %}
+      <div style="margin-bottom: 20px;">
+        <div style="display:flex; justify-content:space-between; margin-bottom: 7px; font-size: 15px; font-weight: 500;">
+          <span>{{ row.name }}</span>
+          <span style="color: var(--ink-soft); font-weight: 400;">{{ row.count }} &middot; {{ "%.0f"|format(pct) }}%</span>
+        </div>
+        <div style="background: var(--leaf-dim); height: 12px; border-radius: 8px; overflow: hidden;">
+          <div style="background: var(--lemon); height: 100%; width: {{ pct }}%; border-radius: 8px;"></div>
+        </div>
+      </div>
+    {% endfor %}
+  </div>
 {% endblock %}

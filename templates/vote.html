@@ -1,20 +1,20 @@
 {% extends "base.html" %}
 {% block content %}
-  <h1>Cast Your Vote</h1>
+  <h1 class="page-title">Cast your vote</h1>
 
-  {% if user.has_voted %}
-    <p>You've already voted. Thanks for participating!</p>
-  {% else %}
-    <form method="post">
-      {% for option in options %}
-        <div class="option">
-          <label>
+  <div class="card">
+    {% if user.has_voted %}
+      <p style="margin:0; color: var(--ink-soft);">Your vote has been recorded. Thanks for taking part!</p>
+    {% else %}
+      <form method="post">
+        {% for option in options %}
+          <label class="option-row">
             <input type="radio" name="option_id" value="{{ option.id }}" required>
-            {{ option.name }}
+            <span class="bubble">{{ option.name }}</span>
           </label>
-        </div>
-      {% endfor %}
-      <button type="submit">Submit Vote</button>
-    </form>
-  {% endif %}
+        {% endfor %}
+        <button type="submit" class="cast">Cast my vote</button>
+      </form>
+    {% endif %}
+  </div>
 {% endblock %}
